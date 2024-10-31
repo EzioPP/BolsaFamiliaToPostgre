@@ -1,7 +1,9 @@
 import os
+import time
 import psycopg
 from psycopg import sql
 
+from static.Constants import selects_dict
 
 
 
@@ -14,10 +16,10 @@ class DatabaseService:
         self.password = password
         self.logger = logger
         
-    def create_connection(self):
+    def create_database(self):
         try:    
             self.logger.info("Conectando ao banco de dados...")
-            conn = psycopg.connect(host=self.host, port=self.post, user=self.user, password=self.password, dbname='postgres')
+            conn = psycopg.connect(host=self.host, port=self.port, user=self.user, password=self.password, dbname='postgres')
             conn.autocommit = True
             cur = conn.cursor()
             cur.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier("AtividadeBolsaFamilia")))
@@ -69,7 +71,7 @@ class DatabaseService:
             self.logger.error(f"Erro ao tratar arquivo: {e}")
             return
 
-    def insert_data(self):
+    def insert_data(self,):
         try:
             conn = psycopg.connect(host=self.host, port=self.port, user=self.user, password=self.password, dbname="AtividadeBolsaFamilia")
         except Exception as e:
@@ -87,10 +89,31 @@ class DatabaseService:
                             self.logger.info(f"Inserção: {cnt}")
             conn.commit()
             cur.close()
+            conn.close()
             self.logger.info("Inserção finalizada!")
             self.logger.warning("Removendo arquivo temporário...")
             os.remove("tmp.csv")
             return cnt
         except Exception as e:
             self.logger.error(f"Erro ao inserir dados: {e}")
+            return
+        
+    def selects_with_times(self):
+        try:
+            conn = psycopg.connect(host=self.host, port=self.port, user=self.user, password=self.password, dbname="AtividadeBolsaFamilia")
+        except Exception as e:
+            self.logger.error(f"Erro ao conectar ao banco de dados: {e}")
+            return
+        cur = conn.cursor()
+        try:
+            for desc, select in selects_dict.items():
+                self.logger.info(f"Selecionando dados: {desc}")
+                start = time.time()
+                cur.execute(select)
+                end = time.time()
+                rows = cur.fetchall()
+                self.logger.info(f"Tempo: {end - start}")
+                self.logger.info(f"Resultado: {rows}")
+        except Exception as e:
+            self.logger.error(f"Erro ao selecionar dados: {e}")
             return

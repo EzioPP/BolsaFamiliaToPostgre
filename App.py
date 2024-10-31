@@ -7,9 +7,15 @@ import time
 #Feito por: EzioPP
 def main():
     logger = LoggerService.get_logger()
+    logger.warning("\n\nPor algum motivo alguns arquivos sao baixado com nome diferente\nQualquer coisa so me chamar\n\n")
     try:
-        month = int(input("OBRIGATORIO!\nDigite o mês\nTipo 1,2,3,4...: "))
-        year = int(input("OBRIGATORIO!\nDigite o ano\nTipo 2020,2021,2022...: "))
+        selectOnly = input("Deseja apenas fazer os selects? (s/n): ")
+        if selectOnly == 's':
+            selectOnly = True
+        else:
+            selectOnly = False
+            month = int(input("OBRIGATORIO!\nDigite o mês\nTipo 1,2,3,4...: "))
+            year = int(input("OBRIGATORIO!\nDigite o ano\nTipo 2020,2021,2022...: "))
         port = int(input("OBRIGATORIO!\nDigite a porta do banco de dados\nTipo 5432: ") or 5432)
         user = input("Digite o nome do usuário\nTipo postgres: ") or 'postgres'
         password = input("Digite a senha do usuário\nTipo 123456: ") or '123456'
@@ -17,7 +23,10 @@ def main():
     except Exception as e:
         logger.error("Erro ao ler os dados de entrada: ", e)
         return
-    
+    if selectOnly:
+        databaseService = DatabaseService("localhost", port, user, password, logger)
+        databaseService.selects_with_times()
+        return
     scrapperService = ScrapperService(logger)
     startDownloadTime = time.time()
     file_name = scrapperService.get_data(month, year)
@@ -25,7 +34,7 @@ def main():
     csv_file = scrapperService.extract_data(file_name)
     endExtractTime = time.time()
     databaseService = DatabaseService("localhost", port, user, password, logger)
-    databaseService.create_connection()
+    databaseService.create_database()
     databaseService.create_table()
     endDatabaseTime = time.time()
     databaseService.get_data_ready(csv_file)
