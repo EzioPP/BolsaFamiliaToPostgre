@@ -17,14 +17,15 @@ months_dict = {
 """ Identificar se existem CPF repetidos no banco de dados (lista se houver)
  """
 selects_dict = {
-    "total_de_registros": "SELECT COUNT(*) FROM public.beneficiarios",
-    "soma_total_de_valores_pagos": "SELECT SUM(valor_parcela) FROM public.beneficiarios",
-    "total_de_beneficiados_brasilia": "SELECT COUNT(*) FROM public.beneficiarios WHERE nome_municipio = 'BRASILIA'",
-    "total_de_beneficiados_sao_paulo": "SELECT COUNT(*) FROM public.beneficiarios WHERE nome_municipio = 'SAO PAULO'",
-    "total_de_beneficiados_salvador": "SELECT COUNT(*) FROM public.beneficiarios WHERE nome_municipio = 'SALVADOR'",
-    "total_de_pagamentos_brasilia": "SELECT SUM(valor_parcela) FROM public.beneficiarios WHERE nome_municipio = 'BRASILIA'",
-    "total_de_pagamentos_sao_paulo": "SELECT SUM(valor_parcela) FROM public.beneficiarios WHERE nome_municipio = 'SAO PAULO'",
-    "total_de_pagamentos_salvador": "SELECT SUM(valor_parcela) FROM public.beneficiarios WHERE nome_municipio = 'SALVADOR'",
-    "soma_total_por_municipio_ordem_alfabetica": "SELECT nome_municipio, SUM(valor_parcela) FROM public.beneficiarios GROUP BY nome_municipio ORDER BY nome_municipio ASC",
-    "soma_total_por_municipio_ordem_maiores_valores": "SELECT nome_municipio, SUM(valor_parcela) FROM public.beneficiarios GROUP BY nome_municipio ORDER BY SUM(valor_parcela) DESC",
+    "Total de registros": "SELECT COUNT(*) AS \"Total_de_registros\" FROM public.beneficiarios",
+    "Soma total de valores pagos": "SELECT SUM(valor_parcela) AS \"Soma_total_de_valores_pagos\" FROM public.beneficiarios",
+    "Total de beneficiados em Brasília": "SELECT COUNT(*) AS \"Total_de_beneficiados_em_Brasilia\" FROM public.beneficiarios WHERE nome_municipio = 'BRASILIA'",
+    "Total de beneficiados em São Paulo": "SELECT COUNT(*) AS \"Total_de_beneficiados_em_Sao_Paulo\" FROM public.beneficiarios WHERE nome_municipio = 'SAO PAULO'",
+    "Total de beneficiados em Salvador": "SELECT COUNT(*) AS \"Total_de_beneficiados_em_Salvador\" FROM public.beneficiarios WHERE nome_municipio = 'SALVADOR'",
+    "Total de pagamentos em Brasília": "SELECT SUM(valor_parcela) AS \"Total_de_pagamentos_em_Brasilia\" FROM public.beneficiarios WHERE nome_municipio = 'BRASILIA'",
+    "Total de pagamentos em São Paulo": "SELECT SUM(valor_parcela) AS \"Total_de_pagamentos_em_Sao_Paulo\" FROM public.beneficiarios WHERE nome_municipio = 'SAO PAULO'",
+    "Total de pagamentos em Salvador": "SELECT SUM(valor_parcela) AS \"Total_de_pagamentos_em_Salvador\" FROM public.beneficiarios WHERE nome_municipio = 'SALVADOR'",
+    "Soma total por município em ordem alfabética": "SELECT nome_municipio, SUM(valor_parcela) FROM public.beneficiarios GROUP BY nome_municipio ORDER BY nome_municipio ASC",
+    "Soma total por município em ordem de maiores valores": "SELECT nome_municipio, SUM(valor_parcela) FROM public.beneficiarios GROUP BY nome_municipio ORDER BY SUM(valor_parcela) DESC",
+    "CPF duplicados": "SELECT cpf_favorecido, COUNT(cpf_favorecido) FROM public.beneficiarios GROUP BY cpf_favorecido HAVING COUNT(cpf_favorecido) > 1"
 }

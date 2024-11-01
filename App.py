@@ -1,5 +1,6 @@
 from services.ScrapperService import ScrapperService
 from services.DatabaseService import DatabaseService
+from services.DocumentService import DocumentService
 import services.LoggerService as LoggerService
 
 import time
@@ -25,7 +26,12 @@ def main():
         return
     if selectOnly:
         databaseService = DatabaseService("localhost", port, user, password, logger)
-        databaseService.selects_with_times()
+        documentService = DocumentService(logger)
+        results = databaseService.selects_with_times()
+        documentService = DocumentService(logger)
+        documentService.create_document()
+        documentService.insert_select_results(results)
+        documentService.save("AtividadeBancoDeDadosAvançado.docx")
         return
     scrapperService = ScrapperService(logger)
     startDownloadTime = time.time()
@@ -37,10 +43,11 @@ def main():
     databaseService.create_database()
     databaseService.create_table()
     endDatabaseTime = time.time()
-    databaseService.get_data_ready(csv_file)
+    scrapperService.get_data_ready(csv_file)
     endPrepareTime = time.time()
     total = databaseService.insert_data()
     endInsertTime = time.time()
+    print("\n\n\n")
     logger.info("Fim da execução!!!")
     logger.info(f"Tempo de download: {endDownloadTime - startDownloadTime}")
     logger.info(f"Tempo de extração: {endExtractTime - endDownloadTime}")
@@ -49,7 +56,12 @@ def main():
     logger.info(f"Tempo de inserção dos dados: {endInsertTime - endPrepareTime}")
     logger.info(f"Tempo total: {endInsertTime - startDownloadTime}")
     logger.info(f"Total de registros inseridos: {total}")
-    
+    print("\n\n\n")
+    results = databaseService.selects_with_times()
+    documentService = DocumentService(logger)
+    documentService.create_document()
+    documentService.insert_select_results(results)
+    documentService.save("AtividadeBancoDeDadosAvançado.docx")
 
 
 if __name__ == "__main__":

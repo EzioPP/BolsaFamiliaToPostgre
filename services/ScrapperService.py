@@ -45,3 +45,27 @@ class ScrapperService:
         except Exception as e:
             self.logger.error(f"Erro ao extrair arquivo: {e}")
             return None
+
+    def get_data_ready(self, file):
+        tmp = 'tmp.csv'
+        try:
+            with open(file, "r") as infile, open(tmp, "w") as outfile:
+
+                header = infile.readline() 
+                outfile.write(header)
+                cnt = 0
+                for line in infile:
+                    columns = line.strip().split(";")
+                    columns[-1] = columns[-1].replace(",", ".")
+                    outfile.write(";".join(columns) + "\n")
+                    cnt += 1
+                    if cnt % 100000 == 0:
+                        self.logger.info(f"Tratamento inicial: {cnt}")
+            self.logger.info("Tratamento inicial finalizado!")
+            self.logger.warning("Removendo arquivo original...")
+            os.remove(file)
+            return tmp
+        except Exception as e:
+            self.logger.error(f"Erro ao tratar arquivo: {e}")
+            return
+

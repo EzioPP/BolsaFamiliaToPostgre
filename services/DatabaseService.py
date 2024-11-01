@@ -15,69 +15,56 @@ class DatabaseService:
         self.user = user
         self.password = password
         self.logger = logger
-        
-    def create_database(self):
-        try:    
-            self.logger.info("Conectando ao banco de dados...")
-            conn = psycopg.connect(host=self.host, port=self.port, user=self.user, password=self.password, dbname='postgres')
-            conn.autocommit = True
-            cur = conn.cursor()
-            cur.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier("AtividadeBolsaFamilia")))
-            cur.close()
-            conn.close()
-        except Exception as e:
-            pass
+        self.conn = self.connect_database()
+    
 
-    def create_table(self):
-        self.logger.info("Criando tabela no banco de dados...")
-        conn = psycopg.connect(host=self.host, port=self.port, user=self.user, password=self.password, dbname="AtividadeBolsaFamilia")
-        conn.autocommit = True
-        cur = conn.cursor()
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS beneficiarios (
-        id SERIAL PRIMARY KEY,
-        mes_competencia VARCHAR(6),
-        mes_referencia VARCHAR(6),
-        uf VARCHAR(2),
-        codigo_municipio_siafi VARCHAR(15),
-        nome_municipio VARCHAR(100),
-        cpf_favorecido VARCHAR(14),
-        nis_favorecido VARCHAR(11),
-        nome_favorecido VARCHAR(100),
-        valor_parcela DECIMAL(10, 2)
-    );
-        """)
-
-    def get_data_ready(self, file):
-        tmp = 'tmp.csv'
-        try:
-            with open(file, "r") as infile, open(tmp, "w") as outfile:
-
-                header = infile.readline() 
-                outfile.write(header)
-                cnt = 0
-                for line in infile:
-                    columns = line.strip().split(";")
-                    columns[-1] = columns[-1].replace(",", ".")
-                    outfile.write(";".join(columns) + "\n")
-                    cnt += 1
-                    if cnt % 100000 == 0:
-                        self.logger.info(f"Tratamento inicial: {cnt}")
-            self.logger.info("Tratamento inicial finalizado!")
-            self.logger.warning("Removendo arquivo original...")
-            os.remove(file)
-            return tmp
-        except Exception as e:
-            self.logger.error(f"Erro ao tratar arquivo: {e}")
-            return
-
-    def insert_data(self,):
+    def connect_database(self):
+        self.logger.info("Conectando ao banco de dados...")
         try:
             conn = psycopg.connect(host=self.host, port=self.port, user=self.user, password=self.password, dbname="AtividadeBolsaFamilia")
+            conn.autocommit = True
+            self.logger.info("Conexão realizada com sucesso!")
+            return conn
         except Exception as e:
-            self.logger.error(f"Erro ao conectar ao banco de dados: {e}")
+            self.logger.error(f"Erro ao conectar ao banco de dados, verifique suas credenciais: {e}")
+
+    def create_database(self):
+        try:
+            cur = self.conn.cursor()
+            cur.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier("AtividadeBolsaFamilia")))
+            cur.close()
+        except Exception as e:
+            self.logger.error(f"Erro ao criar banco de dados: {e}")
             return
-        cur = conn.cursor()
+        
+    def create_table(self):
+        try:	
+            self.logger.info("Criando tabela no banco de dados...")
+            
+            cur = self.conn.cursor()
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS beneficiarios (
+            id SERIAL PRIMARY KEY,
+            mes_competencia VARCHAR(6),
+            mes_referencia VARCHAR(6),
+            uf VARCHAR(2),
+            codigo_municipio_siafi VARCHAR(15),
+            nome_municipio VARCHAR(100),
+            cpf_favorecido VARCHAR(14),
+            nis_favorecido VARCHAR(11),
+            nome_favorecido VARCHAR(100),
+            valor_parcela DECIMAL(10, 2)
+        );
+            """)
+            cur.close()
+        except Exception as e:
+            self.logger.error(f"Erro ao criar tabela: {e}")
+            return
+
+
+    def insert_data(self,):
+        cur = self.conn.cursor()
+        self.logger.info("Inserindo dados...")
         try:
             with open("tmp.csv") as f:
                 with cur.copy(sql.SQL('COPY {} (mes_competencia, mes_referencia, uf, codigo_municipio_siafi, nome_municipio, cpf_favorecido, nis_favorecido, nome_favorecido, valor_parcela) FROM STDIN WITH (FORMAT CSV, HEADER, DELIMITER \';\')').format(sql.Identifier('beneficiarios'))) as copy:
@@ -86,10 +73,8 @@ class DatabaseService:
                         copy.write(line)
                         cnt += 1
                         if cnt % 100000 == 0:
-                            self.logger.info(f"Inserção: {cnt}")
-            conn.commit()
+                            self.logger.info(f"Dados inseridos: {cnt}")
             cur.close()
-            conn.close()
             self.logger.info("Inserção finalizada!")
             self.logger.warning("Removendo arquivo temporário...")
             os.remove("tmp.csv")
@@ -99,21 +84,31 @@ class DatabaseService:
             return
         
     def selects_with_times(self):
-        try:
-            conn = psycopg.connect(host=self.host, port=self.port, user=self.user, password=self.password, dbname="AtividadeBolsaFamilia")
-        except Exception as e:
-            self.logger.error(f"Erro ao conectar ao banco de dados: {e}")
-            return
-        cur = conn.cursor()
+        cur = self.conn.cursor()
+        self.logger.info("Realizando Selects..")
+        allResults = []
         try:
             for desc, select in selects_dict.items():
-                self.logger.info(f"Selecionando dados: {desc}")
+                result = []
+                self.logger.info(f"Realizando Select: {desc}")
                 start = time.time()
                 cur.execute(select)
                 end = time.time()
                 rows = cur.fetchall()
+                labels =  [desc[0] for desc in cur.description] 
+                
                 self.logger.info(f"Tempo: {end - start}")
-                self.logger.info(f"Resultado: {rows}")
+                result.append(desc) #0 Descricao
+                result.append(select) #1 Select
+                result.append(end - start) #2 Tempo
+                result.append(len(rows)) #3 Quantidade de registros
+                result.append(labels) #4 Labels
+                result.append(rows) #5 Registros
+                allResults.append(result) 
+            cur.close()
+            self.logger.info("Selects finalizados!")
+            return allResults
+
         except Exception as e:
             self.logger.error(f"Erro ao selecionar dados: {e}")
             return
