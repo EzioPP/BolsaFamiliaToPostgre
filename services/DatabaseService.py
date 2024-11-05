@@ -21,7 +21,7 @@ class DatabaseService:
     def connect_database(self):
         self.logger.info("Conectando ao banco de dados...")
         try:
-            conn = psycopg.connect(host=self.host, port=self.port, user=self.user, password=self.password, dbname="AtividadeBolsaFamilia")
+            conn = psycopg.connect(host=self.host, port=self.port, user=self.user, password=self.password, dbname="postgres")
             conn.autocommit = True
             self.logger.info("Conexão realizada com sucesso!")
             return conn
