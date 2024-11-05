@@ -5,7 +5,7 @@ def get_logger():
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler('logs/logs.log'),
+            logging.FileHandler('logs.log'),
             logging.StreamHandler()
         ]
     )
